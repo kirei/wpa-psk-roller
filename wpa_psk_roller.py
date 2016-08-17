@@ -37,7 +37,7 @@ from pexpect import pxssh
 import random
 import pprint
 
-CONFIG_FILE = 'wpa-psk-roller.yaml'
+CONFIG_FILE = 'wpa_psk_roller.yaml'
 
 
 def configure_psk(config, psk):
