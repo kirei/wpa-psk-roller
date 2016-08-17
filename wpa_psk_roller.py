@@ -27,15 +27,14 @@
 
 """WPA(2)-PSK Roller"""
 
-import sys
-import yaml
 import json
 import datetime
 import os
 import tempfile
-from pexpect import pxssh
 import random
-import pprint
+import yaml
+from pexpect import pxssh
+#import pprint
 
 CONFIG_FILE = 'wpa_psk_roller.yaml'
 
