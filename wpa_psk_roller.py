@@ -52,14 +52,15 @@ def configure_psk(config, psk):
     # session.logout()
 
 
-def publish_psk(config, psk):
+def publish_psk(psk, outputfile):
     """Publish PSK"""
-    file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+    dirname = os.path.dirname(outputfile)
+    file = tempfile.NamedTemporaryFile(mode='w', delete=False, dir=dirname)
     timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     data = {'psk': psk, 'timestamp': timestamp}
     json.dump(data, file)
     file.close()
-    os.rename(file.name, config['filename'])
+    os.rename(file.name, outputfile)
 
 
 def main():
@@ -76,7 +77,7 @@ def main():
     psk = word_1 + '-' + word_2
 
     configure_psk(config_data['wlc'], psk)
-    publish_psk(config_data['publish'], psk)
+    publish_psk(psk, config_data['publish']['filename'])
 
 
 if __name__ == "__main__":
