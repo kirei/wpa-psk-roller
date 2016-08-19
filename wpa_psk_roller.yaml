@@ -5,7 +5,7 @@ wlc:
   ssid_profile: SSID
 
 publish:
-  filename: /tmp/psk.txt
+  filename: psk.txt
 
 wordlist:
   first:
