@@ -72,8 +72,12 @@ def publish_psk(psk, outputfile):
 def main():
     """Main function"""
 
-    config_stream = open(CONFIG_FILE, "r")
-    config_data = yaml.load(config_stream)
+    try:
+        config_stream = open(CONFIG_FILE, "r")
+        config_data = yaml.load(config_stream)
+    except:
+        print('Failed to read configuration file {}'.format(CONFIG_FILE), file=sys.stderr)
+        exit(1)
 
     wordlist_1 = config_data['wordlist']['first']
     wordlist_2 = config_data['wordlist']['second']
