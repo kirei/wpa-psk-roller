@@ -27,6 +27,7 @@
 
 """WPA(2)-PSK Roller"""
 
+import sys
 import json
 import datetime
 import os
@@ -41,15 +42,20 @@ CONFIG_FILE = 'wpa_psk_roller.yaml'
 
 def configure_psk(config, psk):
     """Configure WLC with PSK"""
-    # session = pxssh.pxssh()
-    # session.force_password = True
-    # session.login(config['hostname'], config['username'], config['password'])
-    # session.sendline('config terminal')
-    # session.sendline('wlan ssid-profile "{}"'.format(config['ssid_profile']))
-    # session.sendline('wpa-passphrase "{}"'.format(psk))
-    # session.sendline('end')
-    # session.sendline('write memory')
-    # session.logout()
+    session = pxssh.pxssh()
+    session.force_password = True
+    session.login(config['hostname'], config['username'], config['password'])
+    session.expect (['pattern'])
+    session.sendline('config terminal')
+    session.expect (['pattern'])
+    session.sendline('wlan ssid-profile "{}"'.format(config['ssid_profile']))
+    session.expect (['pattern'])
+    session.sendline('wpa-passphrase "{}"'.format(psk))
+    session.expect (['pattern'])
+    session.sendline('end')
+    session.sendline('write memory')
+    session.expect (['pattern'])
+    session.logout()
 
 
 def publish_psk(psk, outputfile):
@@ -76,7 +82,13 @@ def main():
     word_2 = random.choice(wordlist_2).lower()
     psk = word_1 + '-' + word_2
 
-    configure_psk(config_data['wlc'], psk)
+    try:
+        configure_psk(config_data['wlc'], psk)
+    except Exception as e:
+        print('Error configuring PSK with WLC:', file=sys.stderr)
+        print(e, file=sys.stderr)
+        exit(1)
+
     publish_psk(psk, config_data['publish']['filename'])
 
 
