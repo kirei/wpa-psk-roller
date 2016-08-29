@@ -5,6 +5,7 @@ wlc:
   ssid_profile: SSID
 
 publish:
+  format: json
   filename: psk.txt
 
 wordlist:
