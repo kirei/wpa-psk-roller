@@ -63,11 +63,11 @@ def publish_psk(psk, output_filename, output_format):
     """Publish PSK"""
     dirname = os.path.dirname(output_filename)
     pskfile = tempfile.NamedTemporaryFile(mode='w', delete=False, dir=dirname)
-    if output_format=='json':
+    if output_format == 'json':
         timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
         data = {'psk': psk, 'timestamp': timestamp}
         json.dump(data, pskfile)
-    elif output_format=='text':
+    elif output_format == 'text':
         print(psk, file=pskfile)
     pskfile.close()
     os.rename(pskfile.name, output_filename)
@@ -91,7 +91,7 @@ def main():
         config_stream = open(args.config, "r")
         config_data = yaml.load(config_stream)
     except:
-        print('Failed to read configuration file {}'.format(CONFIG_FILE), file=sys.stderr)
+        print('Failed to read configuration file {}'.format(args.config), file=sys.stderr)
         exit(1)
 
     wordlist_1 = config_data['wordlist']['first']
