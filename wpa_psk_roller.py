@@ -59,9 +59,9 @@ def configure_psk(config, psk):
     session.logout()
 
 
-def publish_psk(psk, outputfile, output_format):
+def publish_psk(psk, output_filename, output_format):
     """Publish PSK"""
-    dirname = os.path.dirname(outputfile)
+    dirname = os.path.dirname(output_filename)
     pskfile = tempfile.NamedTemporaryFile(mode='w', delete=False, dir=dirname)
     if output_format=='json':
         timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -70,7 +70,7 @@ def publish_psk(psk, outputfile, output_format):
     elif output_format=='text':
         print(psk, file=pskfile)
     pskfile.close()
-    os.rename(pskfile.name, outputfile)
+    os.rename(pskfile.name, output_filename)
 
 
 def main():
