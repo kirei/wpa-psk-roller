@@ -27,6 +27,7 @@
 
 """WPA(2)-PSK Roller"""
 
+import argparse
 import sys
 import json
 import datetime
@@ -45,35 +46,49 @@ def configure_psk(config, psk):
     session = pxssh.pxssh()
     session.force_password = True
     session.login(config['hostname'], config['username'], config['password'])
-    session.expect (['pattern'])
+    session.expect(['pattern'])
     session.sendline('config terminal')
-    session.expect (['pattern'])
+    session.expect(['pattern'])
     session.sendline('wlan ssid-profile "{}"'.format(config['ssid_profile']))
-    session.expect (['pattern'])
+    session.expect(['pattern'])
     session.sendline('wpa-passphrase "{}"'.format(psk))
-    session.expect (['pattern'])
+    session.expect(['pattern'])
     session.sendline('end')
     session.sendline('write memory')
-    session.expect (['pattern'])
+    session.expect(['pattern'])
     session.logout()
 
 
-def publish_psk(psk, outputfile):
+def publish_psk(psk, outputfile, output_format):
     """Publish PSK"""
     dirname = os.path.dirname(outputfile)
-    file = tempfile.NamedTemporaryFile(mode='w', delete=False, dir=dirname)
-    timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-    data = {'psk': psk, 'timestamp': timestamp}
-    json.dump(data, file)
-    file.close()
-    os.rename(file.name, outputfile)
+    pskfile = tempfile.NamedTemporaryFile(mode='w', delete=False, dir=dirname)
+    if output_format=='json':
+        timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        data = {'psk': psk, 'timestamp': timestamp}
+        json.dump(data, pskfile)
+    elif output_format=='text':
+        print(psk, file=pskfile)
+    pskfile.close()
+    os.rename(pskfile.name, outputfile)
 
 
 def main():
     """Main function"""
 
+    parser = argparse.ArgumentParser(description='WPA(2)-PSK Roller')
+    parser.add_argument('--config',
+                        default=CONFIG_FILE,
+                        metavar='filename',
+                        help='Configuration file')
+    parser.add_argument('--debug',
+                        action='store_true',
+                        default=False,
+                        help='Enable debugging')
+    args = parser.parse_args()
+
     try:
-        config_stream = open(CONFIG_FILE, "r")
+        config_stream = open(args.config, "r")
         config_data = yaml.load(config_stream)
     except:
         print('Failed to read configuration file {}'.format(CONFIG_FILE), file=sys.stderr)
@@ -88,12 +103,24 @@ def main():
 
     try:
         configure_psk(config_data['wlc'], psk)
-    except Exception as e:
-        print('Error configuring PSK with WLC:', file=sys.stderr)
-        print(e, file=sys.stderr)
+    except Exception as ex:
+        print('Error configuring PSK with WLC', file=sys.stderr)
+        if args.debug:
+            print(ex, file=sys.stderr)
         exit(1)
 
-    publish_psk(psk, config_data['publish']['filename'])
+    filename = config_data['publish']['filename']
+    try:
+        output_format = config_data['publish']['format']
+    except:
+        output_format = 'json'
+    try:
+        publish_psk(psk, filename, output_format)
+    except Exception as ex:
+        print('Error publishing PSK in {}'.format(filename), file=sys.stderr)
+        if args.debug:
+            print(ex, file=sys.stderr)
+        exit(1)
 
 
 if __name__ == "__main__":
