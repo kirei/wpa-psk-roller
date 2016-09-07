@@ -1,7 +1,9 @@
 wlc:
-  hostname: HOSTNAME
+  hostname: HOSTNAME.DOMAIN
+  shortname: HOSTNAME
   username: USERNAME
   password: PASSWORD
+  enable_password: SECRET
   ssid_profile: SSID
 
 publish:

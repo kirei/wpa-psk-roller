@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2016, Kirei AB
 # All rights reserved.
@@ -28,38 +28,68 @@
 """WPA(2)-PSK Roller"""
 
 import argparse
-import sys
-import json
 import datetime
+import json
 import os
-import tempfile
 import random
+import sys
+import tempfile
 import yaml
 from pexpect import pxssh
-#import pprint
+
 
 CONFIG_FILE = 'wpa_psk_roller.yaml'
 
 
-def configure_psk(config, psk):
+def configure_psk(config: dict, psk: str, debug: bool=False):
     """Configure WLC with PSK"""
-    session = pxssh.pxssh()
+
+    ssid_profile = config['ssid_profile']
+
+    host_prompt = "({})".format(config['shortname'])
+    user_prompt = host_prompt +' >'
+    enable_prompt = host_prompt + ' #'
+    config_prompt = host_prompt + ' (config) #'
+    ssid_prompt = host_prompt + ' (SSID Profile "{}") #'.format(ssid_profile)
+
+    session = pxssh.pxssh(encoding='utf8', timeout=10)
+
+    if debug:
+        session.logfile = sys.stdout
+
     session.force_password = True
-    session.login(config['hostname'], config['username'], config['password'])
-    session.expect(['pattern'])
-    session.sendline('config terminal')
-    session.expect(['pattern'])
-    session.sendline('wlan ssid-profile "{}"'.format(config['ssid_profile']))
-    session.expect(['pattern'])
+    session.login(server=config['hostname'],
+                  username=config['username'],
+                  password=config['password'],
+                  auto_prompt_reset=False)
+
+    # enable
+    session.expect_exact(user_prompt)
+    session.sendline('enable')
+    session.expect_exact('Password:')
+    session.sendline(config['enable_password'])
+
+    # configure PSK
+    session.expect_exact(enable_prompt)
+    session.sendline('configure terminal')
+    session.expect_exact(config_prompt)
+    session.sendline('wlan ssid-profile "{}"'.format(ssid_profile))
+    session.expect_exact(ssid_prompt)
     session.sendline('wpa-passphrase "{}"'.format(psk))
-    session.expect(['pattern'])
+    session.expect_exact(ssid_prompt)
     session.sendline('end')
+
+    # save configuration
+    session.expect_exact(enable_prompt)
     session.sendline('write memory')
-    session.expect(['pattern'])
+
+    # finish
+    session.expect_exact(enable_prompt, timeout=60)
+    session.sendline('exit')
     session.logout()
 
 
-def publish_psk(psk, output_filename, output_format):
+def publish_psk(psk: str, output_filename: str, output_format: str):
     """Publish PSK"""
     dirname = os.path.dirname(output_filename)
     pskfile = tempfile.NamedTemporaryFile(mode='w', delete=False, dir=dirname)
@@ -94,15 +124,19 @@ def main():
         print('Failed to read configuration file {}'.format(args.config), file=sys.stderr)
         exit(1)
 
-    wordlist_1 = config_data['wordlist']['first']
-    wordlist_2 = config_data['wordlist']['second']
+    try:
+        wordlist_1 = config_data['wordlist']['first']
+        wordlist_2 = config_data['wordlist']['second']
+    except KeyError:
+        print('Wordlist not correctly configured')
+        exit(1)
 
     word_1 = random.choice(wordlist_1).lower()
     word_2 = random.choice(wordlist_2).lower()
     psk = word_1 + '-' + word_2
 
     try:
-        configure_psk(config_data['wlc'], psk)
+        configure_psk(config_data['wlc'], psk, debug=args.debug)
     except Exception as ex:
         print('Error configuring PSK with WLC', file=sys.stderr)
         if args.debug:
@@ -112,7 +146,7 @@ def main():
     filename = config_data['publish']['filename']
     try:
         output_format = config_data['publish']['format']
-    except:
+    except KeyError:
         output_format = 'json'
     try:
         publish_psk(psk, filename, output_format)
