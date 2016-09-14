@@ -117,12 +117,8 @@ def main():
                         help='Enable debugging')
     args = parser.parse_args()
 
-    try:
-        config_stream = open(args.config, "r")
-        config_data = yaml.load(config_stream)
-    except:
-        print('Failed to read configuration file {}'.format(args.config), file=sys.stderr)
-        exit(1)
+    config_stream = open(args.config, "r")
+    config_data = yaml.load(config_stream)
 
     try:
         wordlist_1 = config_data['wordlist']['first']
@@ -135,26 +131,15 @@ def main():
     word_2 = random.choice(wordlist_2).lower()
     psk = word_1 + '-' + word_2
 
-    try:
-        configure_psk(config_data['wlc'], psk, debug=args.debug)
-    except Exception as ex:
-        print('Error configuring PSK with WLC', file=sys.stderr)
-        if args.debug:
-            print(ex, file=sys.stderr)
-        exit(1)
+    configure_psk(config_data['wlc'], psk, debug=args.debug)
 
     filename = config_data['publish']['filename']
     try:
         output_format = config_data['publish']['format']
     except KeyError:
         output_format = 'json'
-    try:
-        publish_psk(psk, filename, output_format)
-    except Exception as ex:
-        print('Error publishing PSK in {}'.format(filename), file=sys.stderr)
-        if args.debug:
-            print(ex, file=sys.stderr)
-        exit(1)
+
+    publish_psk(psk, filename, output_format)
 
 
 if __name__ == "__main__":
