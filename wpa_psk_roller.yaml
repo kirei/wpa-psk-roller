@@ -8,7 +8,9 @@ wlc:
 
 publish:
   format: json
-  filename: psk.txt
+  filename: psk.json
+  #format: text
+  #filename: psk.txt
 
 wordlist:
   first:
