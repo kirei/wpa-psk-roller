@@ -1,10 +1,12 @@
 SCRIPT=		wpa_psk_roller.py
 
-TEMPFILES=	psk.txt
+TEMPFILES=	psk.txt psk.json
 
 PYTHON=		python3
 VENV=		venv
-MODULES=	pylint pexpect pyyaml
+MODULES=	pylint wheel pexpect pyyaml
+DISTDIRS=	*.egg-info build dist
+
 
 all:
 
@@ -17,8 +19,12 @@ $(VENV):
 	virtualenv -p $(PYTHON) $(VENV)
 	$(VENV)/bin/pip install $(MODULES)
 
+wheel:
+	$(PYTHON) setup.py bdist_wheel
+
 realclean: clean
 	rm -rf $(VENV)
 
 clean:
 	rm -f $(TEMPFILES)
+	rm -fr $(DISTDIRS)
